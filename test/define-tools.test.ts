@@ -27,7 +27,7 @@ describe("defineTools", () => {
 				{ query: "oi", page: 2 },
 				{ tenantId: "t1", jwt: "x" },
 			),
-		).resolves.toEqual({ results: ["oi"], page: 2 });
+		).resolves.toEqual({ data: { results: ["oi"], page: 2 }, error: null });
 	});
 
 	test("overrides a name supplied by JavaScript callers", () => {

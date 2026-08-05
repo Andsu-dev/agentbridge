@@ -1,8 +1,8 @@
-export type { ApprovalRequest, OnApprovalNeeded } from "./approval.js";
-export type { ResolveTenant, ToolCatalogHooks } from "./catalog.js";
-export { createToolCatalog } from "./catalog.js";
 export { defineTool, defineTools } from "./define-tool.js";
-export type { ToolErrorCode } from "./errors.js";
-export { ToolError } from "./errors.js";
+export { createToolCatalog } from "./catalog.js";
 export { assertTenantScope } from "./tenant-guard.js";
-export type { CallEvent, Tool, ToolContext } from "./types.js";
+export { ToolError } from "./errors.js";
+export type { ResolveTenant, ToolCatalogHooks } from "./catalog.js";
+export type { ApprovalRequest, OnApprovalNeeded } from "./approval.js";
+export type { ToolErrorCode } from "./errors.js";
+export type { CallEvent, CallResult, Tool, ToolContext } from "./types.js";
