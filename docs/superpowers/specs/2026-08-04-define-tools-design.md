@@ -13,9 +13,13 @@ const tools = defineTools({
     handler: async ({ query }) => ({ results: [] }),
   },
 });
+
+const catalog = createToolCatalog({ tools: Object.values(tools) });
 ```
 
 `defineTools` returns an object with the same keys. Each returned entry is a normal `Tool`, whose `name` is the corresponding key (for example, `tools.search.name === "search"`).
+
+Keys are supplied as string literals in the intended usage. They become the tool names registered in a catalog, so callers should use names accepted by their MCP client.
 
 `defineTool` remains unchanged and continues to support defining a single tool explicitly.
 
@@ -28,5 +32,6 @@ const tools = defineTools({
 
 ## Validation
 
-- Add a unit test that verifies the returned names and handlers.
+- Add a unit test using two tools. It verifies the returned names and handlers and registers `Object.values(tools)` in a catalog to exercise the intended integration path.
+- In the source compilation path, include type assertions showing that each handler input is inferred from its own schema. `tsc --noEmit` must fail if a handler uses a field not declared by that entry's schema.
 - Run the existing test suite, typecheck, and build.
