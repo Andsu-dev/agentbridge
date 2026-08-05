@@ -1,5 +1,5 @@
 {
-	"name": "agentbridge",
+	"name": "@andersonbrdev/agentbridge",
 	"version": "0.1.0",
 	"description": "Define an AI agent tool once, call it in-process or serve it over MCP.",
 	"license": "MIT",
