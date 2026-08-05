@@ -1,7 +1,10 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { assertTenantScope } from "./tenant-guard.js";
 import type { Tool, ToolContext } from "./types.js";
+
+export type ResolveTenant = (req: Request) => ToolContext | Promise<ToolContext>;
 
 export type ToolCatalogOptions = {
   tools: Tool<any, any>[];
@@ -39,5 +42,16 @@ export function createToolCatalog(options: ToolCatalogOptions) {
     return server;
   }
 
-  return { call, mcpServer, stdio, tools: options.tools };
+  // stateless: resolves tenant fresh from every request, no session kept between calls
+  function http(resolveTenant: ResolveTenant) {
+    return async function handle(req: Request): Promise<Response> {
+      const ctx = await resolveTenant(req);
+      const server = mcpServer(ctx);
+      const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+      await server.connect(transport);
+      return transport.handleRequest(req);
+    };
+  }
+
+  return { call, mcpServer, stdio, http, tools: options.tools };
 }

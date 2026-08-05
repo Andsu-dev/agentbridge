@@ -42,7 +42,18 @@ Or hand the whole catalog to an MCP client, like Claude Desktop or Claude Code:
 await catalog.stdio({ tenantId, jwt });
 ```
 
-Same handler, same validation, same tenant context, both times. There's no second copy to drift.
+Or serve it remotely, over HTTP, resolving tenant fresh from each incoming request — works on Node, Bun, and Cloudflare Workers, since it's built on the standard `Request`/`Response`:
+
+```ts
+const handle = catalog.http((req) => ({
+  tenantId: getTenantFromJWT(req.headers.get("authorization")),
+  jwt: req.headers.get("authorization") ?? "",
+}));
+
+Bun.serve({ port: 3000, fetch: handle });
+```
+
+Same handler, same validation, same tenant context, every time. There's no second copy to drift.
 
 ## See it work
 
@@ -84,8 +95,9 @@ If a handler ever returns a record whose `enterpriseId` doesn't match `ctx.tenan
 
 - `call(name, input, ctx)` — in-process invocation, schema-validated with Zod.
 - `stdio(ctx)` — serves the whole catalog as a local MCP server over stdio, the way Claude Desktop and Claude Code expect.
+- `http(resolveTenant)` — a stateless Streamable HTTP handler (`(req: Request) => Promise<Response>`), tenant resolved fresh per request. No session kept between calls — each request gets its own `McpServer` instance, so one tenant's context never leaks into another's, even under concurrent load.
 
-Not built yet: an HTTP/Streamable transport that resolves tenant per request. That's the natural next step once you need a *remote*, multi-tenant MCP server instead of a local one — it's left out for now because getting per-request auth right deserves its own pass, not a rushed one.
+Not built yet: session persistence for the HTTP transport (today it's stateless — every request re-initializes). Add it if you need long-lived streaming sessions instead of simple request/response.
 
 ## Install
 
