@@ -10,13 +10,18 @@ const ping = defineTool({
 });
 
 describe("rate limit", () => {
-  test("allows up to max calls then rejects within the window", async () => {
+  test("allows up to max calls then errors within the window", async () => {
     const catalog = createToolCatalog({ tools: [ping] });
     const ctx = { tenantId: "acme", jwt: "x" };
 
     await catalog.call("ping", {}, ctx);
     await catalog.call("ping", {}, ctx);
-    await expect(catalog.call("ping", {}, ctx)).rejects.toThrow(/Rate limit exceeded/);
+    const { data, error } = await catalog.call("ping", {}, ctx);
+
+    expect(data).toBeNull();
+    expect(error?.code).toBe("RATE_LIMITED");
+    expect(error?.retryable).toBe(true);
+    expect(error?.retryAfterMs).toBeGreaterThan(0);
   });
 
   test("tracks each tenant separately", async () => {
@@ -25,7 +30,9 @@ describe("rate limit", () => {
     await catalog.call("ping", {}, { tenantId: "tenant-a", jwt: "x" });
     await catalog.call("ping", {}, { tenantId: "tenant-a", jwt: "x" });
     // tenant-b has its own budget, untouched by tenant-a's calls
-    await expect(catalog.call("ping", {}, { tenantId: "tenant-b", jwt: "x" })).resolves.toBe("pong");
+    const { data, error } = await catalog.call("ping", {}, { tenantId: "tenant-b", jwt: "x" });
+    expect(error).toBeNull();
+    expect(data).toBe("pong");
   });
 
   test("resets after the window passes", async () => {
@@ -35,6 +42,8 @@ describe("rate limit", () => {
     await catalog.call("ping", {}, ctx);
     await catalog.call("ping", {}, ctx);
     await new Promise((resolve) => setTimeout(resolve, 60));
-    await expect(catalog.call("ping", {}, ctx)).resolves.toBe("pong");
+    const { data, error } = await catalog.call("ping", {}, ctx);
+    expect(error).toBeNull();
+    expect(data).toBe("pong");
   });
 });

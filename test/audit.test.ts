@@ -28,11 +28,13 @@ describe("onCall audit hook", () => {
     expect(events[0].durationMs).toBeGreaterThanOrEqual(0);
   });
 
-  test("records a failed call with the error message, then still throws", async () => {
+  test("records a failed call with the error message, and returns it instead of throwing", async () => {
     const events: CallEvent[] = [];
     const catalog = createToolCatalog({ tools: [boom], onCall: (event) => events.push(event) });
 
-    await expect(catalog.call("boom", {}, { tenantId: "acme", jwt: "x" })).rejects.toThrow("handler blew up");
+    const { data, error } = await catalog.call("boom", {}, { tenantId: "acme", jwt: "x" });
+    expect(data).toBeNull();
+    expect(error?.message).toBe("handler blew up");
 
     expect(events).toHaveLength(1);
     expect(events[0]).toMatchObject({ tool: "boom", tenantId: "acme", ok: false, error: "handler blew up" });

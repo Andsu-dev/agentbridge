@@ -7,7 +7,8 @@ const ctx = { tenantId: "acme", jwt: "demo" };
 const catalog = createToolCatalog({ tools: [searchCreators] });
 
 // same tool, called in-process — e.g. from your own copilot loop
-const direct = await catalog.call("search_creators", { niche: "beleza" }, ctx);
+const { data: direct, error } = await catalog.call("search_creators", { niche: "beleza" }, ctx);
+if (error) throw error;
 console.log("in-process:", direct);
 
 // same tool, called by an external agent over MCP — zero extra code written for it

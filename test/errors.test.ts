@@ -7,7 +7,8 @@ const ctx = { tenantId: "acme", jwt: "x" };
 describe("structured error codes", () => {
   test("UNKNOWN_TOOL", async () => {
     const catalog = createToolCatalog({ tools: [] });
-    await expect(catalog.call("nope", {}, ctx)).rejects.toMatchObject({ code: "UNKNOWN_TOOL" });
+    const { error } = await catalog.call("nope", {}, ctx);
+    expect(error).toMatchObject({ code: "UNKNOWN_TOOL" });
   });
 
   test("VALIDATION_ERROR", async () => {
@@ -17,10 +18,11 @@ describe("structured error codes", () => {
       handler: (input) => input.message,
     });
     const catalog = createToolCatalog({ tools: [echo] });
-    await expect(catalog.call("echo", { message: 123 }, ctx)).rejects.toMatchObject({ code: "VALIDATION_ERROR" });
+    const { error } = await catalog.call("echo", { message: 123 }, ctx);
+    expect(error).toMatchObject({ code: "VALIDATION_ERROR" });
   });
 
-  test("HANDLER_ERROR wraps an unexpected throw", async () => {
+  test("HANDLER_ERROR wraps an unexpected throw, and is marked retryable by default", async () => {
     const boom = defineTool({
       name: "boom",
       schema: z.object({}),
@@ -29,20 +31,14 @@ describe("structured error codes", () => {
       },
     });
     const catalog = createToolCatalog({ tools: [boom] });
-    await expect(catalog.call("boom", {}, ctx)).rejects.toMatchObject({
-      code: "HANDLER_ERROR",
-      message: "db is down",
-    });
+    const { error } = await catalog.call("boom", {}, ctx);
+    expect(error).toMatchObject({ code: "HANDLER_ERROR", message: "db is down", retryable: true });
   });
 
   test("errors are instances of ToolError with a .code callers can branch on", async () => {
     const catalog = createToolCatalog({ tools: [] });
-    try {
-      await catalog.call("nope", {}, ctx);
-      throw new Error("should have thrown");
-    } catch (error) {
-      expect(error).toBeInstanceOf(ToolError);
-      expect((error as ToolError).code).toBe("UNKNOWN_TOOL");
-    }
+    const { error } = await catalog.call("nope", {}, ctx);
+    expect(error).toBeInstanceOf(ToolError);
+    expect(error?.code).toBe("UNKNOWN_TOOL");
   });
 });

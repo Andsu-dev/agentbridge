@@ -9,13 +9,23 @@ export type ToolErrorCode =
   | "APPROVAL_REJECTED"
   | "HANDLER_ERROR";
 
+export type ToolErrorOptions = ErrorOptions & { retryable?: boolean; retryAfterMs?: number };
+
+function defaultRetryable(code: ToolErrorCode): boolean {
+  return code === "RATE_LIMITED" || code === "HANDLER_ERROR";
+}
+
 export class ToolError extends Error {
   code: ToolErrorCode;
+  retryable: boolean;
+  retryAfterMs?: number;
 
-  constructor(code: ToolErrorCode, message: string, options?: ErrorOptions) {
+  constructor(code: ToolErrorCode, message: string, options?: ToolErrorOptions) {
     super(message, options);
     this.name = "ToolError";
     this.code = code;
+    this.retryable = options?.retryable ?? defaultRetryable(code);
+    this.retryAfterMs = options?.retryAfterMs;
   }
 }
 

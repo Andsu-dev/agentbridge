@@ -23,7 +23,8 @@ export function createRateLimiter() {
     if (bucket.count >= tool.rateLimit.max) {
       throw new ToolError(
         "RATE_LIMITED",
-        `Rate limit exceeded for "${tool.name}" (tenant "${ctx.tenantId}"): max ${tool.rateLimit.max} calls per ${tool.rateLimit.windowMs}ms`
+        `Rate limit exceeded for "${tool.name}" (tenant "${ctx.tenantId}"): max ${tool.rateLimit.max} calls per ${tool.rateLimit.windowMs}ms`,
+        { retryAfterMs: bucket.resetAt - now }
       );
     }
 

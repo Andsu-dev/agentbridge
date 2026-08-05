@@ -11,21 +11,22 @@ const echo = defineTool({
 describe("createToolCatalog", () => {
   test("call() runs the handler with parsed input and context", async () => {
     const catalog = createToolCatalog({ tools: [echo] });
-    const result = await catalog.call("echo", { message: "oi" }, { tenantId: "t1", jwt: "x" });
-    expect(result).toBe("t1: oi");
+    const { data, error } = await catalog.call("echo", { message: "oi" }, { tenantId: "t1", jwt: "x" });
+    expect(error).toBeNull();
+    expect(data).toBe("t1: oi");
   });
 
-  test("call() throws on unknown tool", async () => {
+  test("call() returns an error, not a throw, on unknown tool", async () => {
     const catalog = createToolCatalog({ tools: [echo] });
-    await expect(
-      catalog.call("nope", {}, { tenantId: "t1", jwt: "x" })
-    ).rejects.toThrow("Unknown tool: nope");
+    const { data, error } = await catalog.call("nope", {}, { tenantId: "t1", jwt: "x" });
+    expect(data).toBeNull();
+    expect(error).toMatchObject({ code: "UNKNOWN_TOOL", message: "Unknown tool: nope" });
   });
 
   test("call() validates input against schema", async () => {
     const catalog = createToolCatalog({ tools: [echo] });
-    await expect(
-      catalog.call("echo", { message: 123 }, { tenantId: "t1", jwt: "x" })
-    ).rejects.toThrow();
+    const { data, error } = await catalog.call("echo", { message: 123 }, { tenantId: "t1", jwt: "x" });
+    expect(data).toBeNull();
+    expect(error?.code).toBe("VALIDATION_ERROR");
   });
 });

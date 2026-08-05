@@ -60,8 +60,8 @@ describe("dedupe", () => {
     });
     const catalog = createToolCatalog({ tools: [flaky] });
 
-    await expect(catalog.call("flaky", {}, ctx)).rejects.toThrow();
-    await expect(catalog.call("flaky", {}, ctx)).rejects.toThrow();
+    expect((await catalog.call("flaky", {}, ctx)).error).not.toBeNull();
+    expect((await catalog.call("flaky", {}, ctx)).error).not.toBeNull();
 
     expect(runs).toBe(2);
   });

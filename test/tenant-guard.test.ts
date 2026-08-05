@@ -14,11 +14,12 @@ describe("tenant guard", () => {
     });
 
     const catalog = createToolCatalog({ tools: [listCreators] });
-    const result = await catalog.call("list_creators", {}, ctx);
-    expect(result).toEqual([{ id: "1", enterpriseId: "acme" }]);
+    const { data, error } = await catalog.call("list_creators", {}, ctx);
+    expect(error).toBeNull();
+    expect(data).toEqual([{ id: "1", enterpriseId: "acme" }]);
   });
 
-  test("throws when a handler bug leaks another tenant's record", async () => {
+  test("returns TENANT_LEAK when a handler bug leaks another tenant's record", async () => {
     const buggyListCreators = defineTool({
       name: "list_creators",
       schema: z.object({}),
@@ -28,7 +29,10 @@ describe("tenant guard", () => {
     });
 
     const catalog = createToolCatalog({ tools: [buggyListCreators] });
-    await expect(catalog.call("list_creators", {}, ctx)).rejects.toThrow(/Cross-tenant leak/);
+    const { data, error } = await catalog.call("list_creators", {}, ctx);
+    expect(data).toBeNull();
+    expect(error?.code).toBe("TENANT_LEAK");
+    expect(error?.message).toMatch(/Cross-tenant leak/);
   });
 
   test("is opt-in — tools without tenantField are not checked", async () => {
@@ -39,7 +43,8 @@ describe("tenant guard", () => {
     });
 
     const catalog = createToolCatalog({ tools: [noGuard] });
-    const result = await catalog.call("no_guard", {}, ctx);
-    expect(result).toEqual([{ id: "1", enterpriseId: "whatever" }]);
+    const { data, error } = await catalog.call("no_guard", {}, ctx);
+    expect(error).toBeNull();
+    expect(data).toEqual([{ id: "1", enterpriseId: "whatever" }]);
   });
 });

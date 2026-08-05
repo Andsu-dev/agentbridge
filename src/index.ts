@@ -5,4 +5,4 @@ export { ToolError } from "./errors.js";
 export type { ResolveTenant } from "./catalog.js";
 export type { ApprovalRequest, OnApprovalNeeded } from "./approval.js";
 export type { ToolErrorCode } from "./errors.js";
-export type { CallEvent, Tool, ToolContext } from "./types.js";
+export type { CallEvent, CallResult, Tool, ToolContext } from "./types.js";

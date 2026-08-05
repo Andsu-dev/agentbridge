@@ -2,6 +2,10 @@ import type { Tool, ToolContext } from "./types.js";
 
 type Entry = { result: Promise<unknown>; expiresAt: number };
 
+function isFailedResult(value: unknown): boolean {
+  return typeof value === "object" && value !== null && "error" in value && Boolean((value as any).error);
+}
+
 // ponytail: per-process in-memory cache, same ceiling as the rate limiter.
 export function createDeduper() {
   const inflight = new Map<string, Entry>();
@@ -23,7 +27,8 @@ export function createDeduper() {
 
     const result = run();
     inflight.set(key, { result, expiresAt: now + tool.dedupe.windowMs });
-    result.catch(() => inflight.delete(key)); // don't cache failures — a real retry should re-run
+    // don't cache a failed attempt — a real retry should re-run, not replay the same error
+    result.then((value) => isFailedResult(value) && inflight.delete(key)).catch(() => inflight.delete(key));
 
     return result;
   };
