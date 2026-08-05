@@ -8,7 +8,8 @@
 		"skipLibCheck": true,
 		"esModuleInterop": true,
 		"types": ["bun-types"],
-		"outDir": "dist"
+		"outDir": "dist",
+		"rootDir": "src"
 	},
 	"include": ["src"]
 }
