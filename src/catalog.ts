@@ -1,24 +1,43 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
+import { createRateLimiter } from "./rate-limit.js";
 import { assertTenantScope } from "./tenant-guard.js";
-import type { Tool, ToolContext } from "./types.js";
+import type { CallEvent, Tool, ToolContext } from "./types.js";
 
 export type ResolveTenant = (req: Request) => ToolContext | Promise<ToolContext>;
 
 export type ToolCatalogOptions = {
   tools: Tool<any, any>[];
+  /** Fires after every call, success or failure — use for logging/audit trails. */
+  onCall?: (event: CallEvent) => void | Promise<void>;
 };
 
 export function createToolCatalog(options: ToolCatalogOptions) {
   const byName = new Map(options.tools.map((tool) => [tool.name, tool]));
+  const assertRateLimit = createRateLimiter();
 
   async function call(name: string, input: unknown, ctx: ToolContext) {
     const tool = byName.get(name);
     if (!tool) throw new Error(`Unknown tool: ${name}`);
-    const output = await tool.handler(tool.schema.parse(input), ctx);
-    assertTenantScope(output, tool, ctx);
-    return output;
+
+    const start = performance.now();
+    try {
+      assertRateLimit(tool, ctx);
+      const output = await tool.handler(tool.schema.parse(input), ctx);
+      assertTenantScope(output, tool, ctx);
+      await options.onCall?.({ tool: name, tenantId: ctx.tenantId, durationMs: performance.now() - start, ok: true });
+      return output;
+    } catch (error) {
+      await options.onCall?.({
+        tool: name,
+        tenantId: ctx.tenantId,
+        durationMs: performance.now() - start,
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
   }
 
   function mcpServer(ctx: ToolContext) {

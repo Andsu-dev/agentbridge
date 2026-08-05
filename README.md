@@ -87,6 +87,32 @@ const listCreators = defineTool({
 
 If a handler ever returns a record whose `enterpriseId` doesn't match `ctx.tenantId`, `call()` throws instead of letting it reach the caller — MCP client or your own copilot. It's opt-in per tool and only catches leaks the output actually reveals (it can't see a leak baked into a scalar return value with no tenant field) — a runtime backstop, not a substitute for correct queries.
 
+## What's specific to agents calling your tools, not humans
+
+An agent doesn't click buttons — it can call a tool in a loop, and nobody's watching in real time when it does. Two small opt-ins cover the failure modes that come from that:
+
+**Audit trail.** Every call fires `onCall`, whether it succeeded or not — the question "what did the agent actually do to my data" needs an answer, and it needs to not be a maybe.
+
+```ts
+const catalog = createToolCatalog({
+  tools: [searchCreators],
+  onCall: (event) => logger.info("tool_call", event), // { tool, tenantId, durationMs, ok, error? }
+});
+```
+
+**Rate limit per tenant.** A buggy agent retrying in a tight loop can do in seconds what a human couldn't do in a day. Opt in per tool:
+
+```ts
+const searchCreators = defineTool({
+  name: "search_creators",
+  schema: z.object({ niche: z.string() }),
+  rateLimit: { max: 20, windowMs: 60_000 }, // per tenant, per tool
+  handler: async (input, ctx) => { /* ... */ },
+});
+```
+
+Both are opt-in and additive — existing tools and catalogs work unchanged without them.
+
 ## Why this and not a bigger agent framework
 
 `agentbridge` doesn't orchestrate agents, doesn't manage conversations, and doesn't pick which LLM to call. It does one narrow thing: a tool is defined once and reachable from more than one caller. If you only ever call your tools from one place, you don't need this — a plain function is simpler and you should use that instead.
