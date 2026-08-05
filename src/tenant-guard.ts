@@ -1,3 +1,4 @@
+import { ToolError } from "./errors.js";
 import type { Tool, ToolContext } from "./types.js";
 
 export function assertTenantScope(output: unknown, tool: Tool<any, any>, ctx: ToolContext) {
@@ -9,7 +10,8 @@ export function assertTenantScope(output: unknown, tool: Tool<any, any>, ctx: To
 
     const value = (record as Record<string, unknown>)[tool.tenantField];
     if (value !== undefined && value !== ctx.tenantId) {
-      throw new Error(
+      throw new ToolError(
+        "TENANT_LEAK",
         `Cross-tenant leak in "${tool.name}": record has ${tool.tenantField}="${value}", expected "${ctx.tenantId}"`
       );
     }

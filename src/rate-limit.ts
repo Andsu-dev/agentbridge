@@ -1,3 +1,4 @@
+import { ToolError } from "./errors.js";
 import type { Tool, ToolContext } from "./types.js";
 
 type Bucket = { count: number; resetAt: number };
@@ -20,7 +21,8 @@ export function createRateLimiter() {
     }
 
     if (bucket.count >= tool.rateLimit.max) {
-      throw new Error(
+      throw new ToolError(
+        "RATE_LIMITED",
         `Rate limit exceeded for "${tool.name}" (tenant "${ctx.tenantId}"): max ${tool.rateLimit.max} calls per ${tool.rateLimit.windowMs}ms`
       );
     }

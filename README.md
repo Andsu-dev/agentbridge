@@ -113,6 +113,37 @@ const searchCreators = defineTool({
 
 Both are opt-in and additive — existing tools and catalogs work unchanged without them.
 
+**Idempotency.** An agent that times out waiting for a response tends to just call again. Without protection, `create_campaign` runs twice. Opt in with `dedupe` and identical `(tool, tenant, input)` within the window returns the same result instead of re-executing:
+
+```ts
+const createCampaign = defineTool({
+  name: "create_campaign",
+  schema: z.object({ name: z.string() }),
+  dedupe: { windowMs: 5_000 },
+  handler: async (input, ctx) => { /* runs once, even if called twice at the same time */ },
+});
+```
+
+A failed call is never cached — a genuine retry after a real error re-runs the handler.
+
+**Approval gate.** Some tools shouldn't fire just because an agent decided to call them. Mark a tool `requiresApproval: true` and wire up `onApprovalNeeded` — the call blocks until it returns `true`. No handler configured means the catalog fails closed, not open:
+
+```ts
+const deleteCampaign = defineTool({
+  name: "delete_campaign",
+  schema: z.object({ id: z.string() }),
+  requiresApproval: true,
+  handler: async (input, ctx) => { /* only runs if approved */ },
+});
+
+const catalog = createToolCatalog({
+  tools: [deleteCampaign],
+  onApprovalNeeded: async ({ tool, tenantId, input }) => askAHuman(tool, tenantId, input),
+});
+```
+
+**Structured errors.** Every failure the catalog raises — unknown tool, bad input, tenant leak, rate limit, rejected approval — is a `ToolError` with a stable `.code` (`"RATE_LIMITED"`, `"TENANT_LEAK"`, `"APPROVAL_REJECTED"`, ...), not just a message to parse. Over MCP, the code is prefixed onto the error text agents see, so both callers get to branch on what actually happened instead of guessing from prose.
+
 ## Why this and not a bigger agent framework
 
 `agentbridge` doesn't orchestrate agents, doesn't manage conversations, and doesn't pick which LLM to call. It does one narrow thing: a tool is defined once and reachable from more than one caller. If you only ever call your tools from one place, you don't need this — a plain function is simpler and you should use that instead.
