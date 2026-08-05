@@ -12,13 +12,16 @@ console.log("in-process:", direct);
 
 // same tool, called by an external agent over MCP — zero extra code written for it
 const transport = new StdioClientTransport({
-  command: "bun",
-  args: ["run", new URL("./server.ts", import.meta.url).pathname],
+	command: "bun",
+	args: ["run", new URL("./server.ts", import.meta.url).pathname],
 });
 const client = new Client({ name: "demo-client", version: "0.1.0" });
 await client.connect(transport);
 
-const viaMcp = await client.callTool({ name: "search_creators", arguments: { niche: "beleza" } });
+const viaMcp = await client.callTool({
+	name: "search_creators",
+	arguments: { niche: "beleza" },
+});
 const content = viaMcp.content as Array<{ type: string; text: string }>;
 console.log("via MCP:   ", JSON.parse(content[0].text));
 
