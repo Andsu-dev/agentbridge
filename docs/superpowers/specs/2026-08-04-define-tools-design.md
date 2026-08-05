@@ -27,11 +27,11 @@ Keys are supplied as string literals in the intended usage. They become the tool
 
 - Add `defineTools` beside `defineTool`.
 - Its input type omits `name` from every `Tool` definition while retaining schema and handler inference per property.
-- Construct each returned tool by adding the object key as `name`.
+- Construct each returned tool by adding the object key as `name`. If JavaScript callers provide a `name`, discard it so the key always wins.
 - Export the helper from the package entry point.
 
 ## Validation
 
 - Add a unit test using two tools. It verifies the returned names and handlers and registers `Object.values(tools)` in a catalog to exercise the intended integration path.
-- In the source compilation path, include type assertions showing that each handler input is inferred from its own schema. `tsc --noEmit` must fail if a handler uses a field not declared by that entry's schema.
+- Add `tsconfig.typecheck.json`, extending the main config and including the type-test fixture under `test/`. Update the `typecheck` script to run it. The fixture shows that each handler input is inferred from its own schema; a field absent from that entry's schema must make the command fail.
 - Run the existing test suite, typecheck, and build.
