@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { assertTenantScope } from "./tenant-guard.js";
 import type { Tool, ToolContext } from "./types.js";
 
 export type ToolCatalogOptions = {
@@ -12,7 +13,9 @@ export function createToolCatalog(options: ToolCatalogOptions) {
   async function call(name: string, input: unknown, ctx: ToolContext) {
     const tool = byName.get(name);
     if (!tool) throw new Error(`Unknown tool: ${name}`);
-    return tool.handler(tool.schema.parse(input), ctx);
+    const output = await tool.handler(tool.schema.parse(input), ctx);
+    assertTenantScope(output, tool, ctx);
+    return output;
   }
 
   function mcpServer(ctx: ToolContext) {

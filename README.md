@@ -61,6 +61,21 @@ via MCP:    { tenant: "acme", creators: [ "@beleza_creator_1", "@beleza_creator_
 
 `bun run bench` measures the in-process path's own overhead (Zod validation + dispatch, no MCP round-trip) — on a laptop it lands around 4M calls/sec, ~0.24µs each. The library isn't the bottleneck in any real handler; the point of the benchmark is just to confirm that's true rather than assume it.
 
+## Catching cross-tenant leaks
+
+If you're multi-tenant, `ctx.tenantId` reaching every handler isn't enough on its own — a handler can still leak another tenant's data through a bug (missing `WHERE`, wrong id passed down). Declare `tenantField` and the catalog checks every returned record before it leaves the tool, regardless of which door it went out:
+
+```ts
+const listCreators = defineTool({
+  name: "list_creators",
+  schema: z.object({}),
+  tenantField: "enterpriseId", // field on the returned records that identifies the tenant
+  handler: async (input, ctx) => db.query.creators.findMany({ where: eq(creators.enterpriseId, ctx.tenantId) }),
+});
+```
+
+If a handler ever returns a record whose `enterpriseId` doesn't match `ctx.tenantId`, `call()` throws instead of letting it reach the caller — MCP client or your own copilot. It's opt-in per tool and only catches leaks the output actually reveals (it can't see a leak baked into a scalar return value with no tenant field) — a runtime backstop, not a substitute for correct queries.
+
 ## Why this and not a bigger agent framework
 
 `agentbridge` doesn't orchestrate agents, doesn't manage conversations, and doesn't pick which LLM to call. It does one narrow thing: a tool is defined once and reachable from more than one caller. If you only ever call your tools from one place, you don't need this — a plain function is simpler and you should use that instead.
