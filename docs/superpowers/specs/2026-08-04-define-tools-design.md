@@ -33,5 +33,5 @@ Keys are supplied as string literals in the intended usage. They become the tool
 ## Validation
 
 - Add a unit test using two tools. It verifies the returned names and handlers, confirms an input `name` is overridden by its key, and registers `Object.values(tools)` in a catalog to exercise the intended integration path.
-- Add `tsconfig.typecheck.json`, extending the main config and including the type-test fixture under `test/`. Update the `typecheck` script to run it. The fixture uses `-expect-error` on a field absent from an entry's schema, so the command succeeds only while that error is correctly detected.
+- Add `tsconfig.typecheck.json`, extending the main config and including the type-test fixture under `test/`. Update the `typecheck` script to run it. The fixture uses `@ts-expect-error` on a field absent from an entry's schema, so the command succeeds only while that error is correctly detected.
 - Run the existing test suite, typecheck, and build.
