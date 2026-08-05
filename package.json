@@ -1,0 +1,34 @@
+{
+  "name": "agentbridge",
+  "version": "0.1.0",
+  "description": "Define an AI agent tool once, call it in-process or serve it over MCP.",
+  "license": "MIT",
+  "author": "andsu-dev",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "bun build ./src/index.ts --outdir dist --target node --format esm --packages=external && tsc --emitDeclarationOnly --outDir dist",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "example": "bun run examples/basic.ts",
+    "bench": "bun run examples/bench.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.7.0"
+  }
+}
