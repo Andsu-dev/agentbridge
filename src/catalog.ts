@@ -10,12 +10,16 @@ import type { CallEvent, CallResult, Tool, ToolContext } from "./types.js";
 
 export type ResolveTenant = (req: Request) => ToolContext | Promise<ToolContext>;
 
-export type ToolCatalogOptions = {
-  tools: Tool<any, any>[];
+export type ToolCatalogHooks = {
   /** Fires after every call, success or failure — use for logging/audit trails. */
   onCall?: (event: CallEvent) => void | Promise<void>;
   /** Required for any tool with requiresApproval: true — decides whether the call proceeds. */
   onApprovalNeeded?: OnApprovalNeeded;
+};
+
+export type ToolCatalogOptions = {
+  tools: Tool<any, any>[];
+  hooks?: ToolCatalogHooks;
 };
 
 async function isVisible(tool: Tool<any, any>, ctx: ToolContext) {
@@ -47,10 +51,10 @@ export function createToolCatalog(options: ToolCatalogOptions) {
       try {
         assertRateLimit(tool, ctx);
         const parsed = tool.schema.parse(input);
-        await assertApproved(tool, ctx, parsed, options.onApprovalNeeded);
+        await assertApproved(tool, ctx, parsed, options.hooks?.onApprovalNeeded);
 
         if (tool.shadow) {
-          await options.onCall?.({
+          await options.hooks?.onCall?.({
             tool: name,
             tenantId: ctx.tenantId,
             input,
@@ -63,7 +67,7 @@ export function createToolCatalog(options: ToolCatalogOptions) {
 
         const output = await tool.handler(parsed, ctx);
         assertTenantScope(output, tool, ctx);
-        await options.onCall?.({
+        await options.hooks?.onCall?.({
           tool: name,
           tenantId: ctx.tenantId,
           input,
@@ -73,7 +77,7 @@ export function createToolCatalog(options: ToolCatalogOptions) {
         return ok(output);
       } catch (error) {
         const toolError = toToolError(error);
-        await options.onCall?.({
+        await options.hooks?.onCall?.({
           tool: name,
           tenantId: ctx.tenantId,
           input,

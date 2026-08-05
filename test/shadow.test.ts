@@ -19,7 +19,7 @@ describe("shadow mode", () => {
       },
     });
 
-    const catalog = createToolCatalog({ tools: [deleteAccount], onCall: (event) => events.push(event) });
+    const catalog = createToolCatalog({ tools: [deleteAccount], hooks: { onCall: (event) => events.push(event) } });
     const { error } = await catalog.call("delete_account", { id: "1" }, ctx);
 
     expect(error).toBeNull();

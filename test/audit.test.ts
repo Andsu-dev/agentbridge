@@ -19,7 +19,7 @@ const boom = defineTool({
 describe("onCall audit hook", () => {
   test("records a successful call", async () => {
     const events: CallEvent[] = [];
-    const catalog = createToolCatalog({ tools: [echo], onCall: (event) => events.push(event) });
+    const catalog = createToolCatalog({ tools: [echo], hooks: { onCall: (event) => events.push(event) } });
 
     await catalog.call("echo", { message: "oi" }, { tenantId: "acme", jwt: "x" });
 
@@ -30,7 +30,7 @@ describe("onCall audit hook", () => {
 
   test("records a failed call with the error message, and returns it instead of throwing", async () => {
     const events: CallEvent[] = [];
-    const catalog = createToolCatalog({ tools: [boom], onCall: (event) => events.push(event) });
+    const catalog = createToolCatalog({ tools: [boom], hooks: { onCall: (event) => events.push(event) } });
 
     const { data, error } = await catalog.call("boom", {}, { tenantId: "acme", jwt: "x" });
     expect(data).toBeNull();

@@ -31,7 +31,7 @@ describe("approval gate", () => {
     const runs = { count: 0 };
     const catalog = createToolCatalog({
       tools: [sensitiveTool(runs)],
-      onApprovalNeeded: () => false,
+      hooks: { onApprovalNeeded: () => false },
     });
 
     const { data, error } = await catalog.call("delete_campaign", { id: "1" }, ctx);
@@ -45,11 +45,13 @@ describe("approval gate", () => {
     const seen: unknown[] = [];
     const catalog = createToolCatalog({
       tools: [sensitiveTool(runs)],
+      hooks: {
       onApprovalNeeded: (request) => {
         seen.push(request);
         return true;
       },
-    });
+    },
+  });
 
     const { data, error } = await catalog.call("delete_campaign", { id: "1" }, ctx);
 

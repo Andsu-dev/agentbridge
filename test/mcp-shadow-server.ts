@@ -15,5 +15,5 @@ const deleteAccount = defineTool({
 
 await createToolCatalog({
   tools: [deleteAccount],
-  onCall: (event) => console.error(`[shadow-log] ${JSON.stringify(event)} realRuns=${realRuns}`),
+  hooks: { onCall: (event) => console.error(`[shadow-log] ${JSON.stringify(event)} realRuns=${realRuns}`) },
 }).stdio({ tenantId: "acme", jwt: "demo" });

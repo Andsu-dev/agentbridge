@@ -23,7 +23,7 @@ export type Tool<Schema extends z.ZodObject<any> = z.ZodObject<any>, Output = un
   rateLimit?: { max: number; windowMs: number };
   /** Opt-in: identical (tool, tenant, input) within the window returns the cached result instead of re-running. */
   dedupe?: { windowMs: number };
-  /** Opt-in: call only proceeds after the catalog's onApprovalNeeded handler approves it. */
+  /** Opt-in: call only proceeds after the catalog's hooks.onApprovalNeeded handler approves it. */
   requiresApproval?: boolean;
   /**
    * Opt-in: hides the tool from this tenant entirely — not registered in mcpServer()/http()'s

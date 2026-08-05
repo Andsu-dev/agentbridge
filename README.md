@@ -101,7 +101,9 @@ An agent doesn't click buttons, it can call a tool in a loop, and nobody's watch
 ```ts
 const catalog = createToolCatalog({
   tools: [searchCreators],
-  onCall: (event) => logger.info("tool_call", event), // { tool, tenantId, input, durationMs, ok, error?, code? }
+  hooks: {
+    onCall: (event) => logger.info("tool_call", event),
+  }, // { tool, tenantId, input, durationMs, ok, error?, code? }
 });
 ```
 
@@ -127,7 +129,7 @@ const createCampaign = defineTool({
 });
 ```
 
-**Approval gate.** Some tools shouldn't fire just because an agent decided to call them. Mark a tool `requiresApproval: true` and wire up `onApprovalNeeded`, the call blocks until it returns `true`. No handler configured means the catalog fails closed, not open:
+**Approval gate.** Some tools shouldn't fire just because an agent decided to call them. Mark a tool `requiresApproval: true` and wire up `hooks.onApprovalNeeded`, the call blocks until it returns `true`. No handler configured means the catalog fails closed, not open:
 
 ```ts
 const deleteCampaign = defineTool({
@@ -139,7 +141,9 @@ const deleteCampaign = defineTool({
 
 const catalog = createToolCatalog({
   tools: [deleteCampaign],
-  onApprovalNeeded: async ({ tool, tenantId, input }) => askAHuman(tool, tenantId, input),
+  hooks: {
+    onApprovalNeeded: async ({ tool, tenantId, input }) => askAHuman(tool, tenantId, input),
+  },
 });
 ```
 
