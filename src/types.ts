@@ -27,7 +27,7 @@ export type Tool<
 	rateLimit?: { max: number; windowMs: number };
 	/** Opt-in: identical (tool, tenant, input) within the window returns the cached result instead of re-running. */
 	dedupe?: { windowMs: number };
-	/** Opt-in: call only proceeds after the catalog's onApprovalNeeded handler approves it. */
+	/** Opt-in: call only proceeds after the catalog's hooks.onApprovalNeeded handler approves it. */
 	requiresApproval?: boolean;
 };
 

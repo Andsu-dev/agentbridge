@@ -16,7 +16,7 @@ Define the tool once. Get both doors for free.
 
 ```ts
 import { z } from "zod";
-import { defineTool, createToolCatalog } from "agentbridge";
+import { defineTool, defineTools, createToolCatalog } from "agentbridge";
 
 const searchCreators = defineTool({
   name: "search_creators",
@@ -96,7 +96,9 @@ An agent doesn't click buttons — it can call a tool in a loop, and nobody's wa
 ```ts
 const catalog = createToolCatalog({
   tools: [searchCreators],
-  onCall: (event) => logger.info("tool_call", event), // { tool, tenantId, durationMs, ok, error? }
+  hooks: {
+    onCall: (event) => logger.info("tool_call", event),
+  }, // { tool, tenantId, durationMs, ok, error? }
 });
 ```
 
@@ -126,19 +128,22 @@ const createCampaign = defineTool({
 
 A failed call is never cached — a genuine retry after a real error re-runs the handler.
 
-**Approval gate.** Some tools shouldn't fire just because an agent decided to call them. Mark a tool `requiresApproval: true` and wire up `onApprovalNeeded` — the call blocks until it returns `true`. No handler configured means the catalog fails closed, not open:
+**Approval gate.** Some tools shouldn't fire just because an agent decided to call them. Mark a tool `requiresApproval: true` and wire up `hooks.onApprovalNeeded` — the call blocks until it returns `true`. No handler configured means the catalog fails closed, not open:
 
 ```ts
-const deleteCampaign = defineTool({
-  name: "delete_campaign",
-  schema: z.object({ id: z.string() }),
-  requiresApproval: true,
-  handler: async (input, ctx) => { /* only runs if approved */ },
+const tools = defineTools({
+  deleteCampaign: {
+    schema: z.object({ id: z.string() }),
+    requiresApproval: true,
+    handler: async (input, ctx) => { /* only runs if approved */ },
+  },
 });
 
 const catalog = createToolCatalog({
-  tools: [deleteCampaign],
-  onApprovalNeeded: async ({ tool, tenantId, input }) => askAHuman(tool, tenantId, input),
+  tools,
+  hooks: {
+    onApprovalNeeded: async ({ tool, tenantId, input }) => askAHuman(tool, tenantId, input),
+  },
 });
 ```
 

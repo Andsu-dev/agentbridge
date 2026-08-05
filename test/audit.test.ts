@@ -21,7 +21,7 @@ describe("onCall audit hook", () => {
 		const events: CallEvent[] = [];
 		const catalog = createToolCatalog({
 			tools: [echo],
-			onCall: (event) => events.push(event),
+			hooks: { onCall: (event) => events.push(event) },
 		});
 
 		await catalog.call(
@@ -43,7 +43,7 @@ describe("onCall audit hook", () => {
 		const events: CallEvent[] = [];
 		const catalog = createToolCatalog({
 			tools: [boom],
-			onCall: (event) => events.push(event),
+			hooks: { onCall: (event) => events.push(event) },
 		});
 
 		await expect(

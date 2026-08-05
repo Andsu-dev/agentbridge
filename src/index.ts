@@ -1,5 +1,5 @@
 export type { ApprovalRequest, OnApprovalNeeded } from "./approval.js";
-export type { ResolveTenant } from "./catalog.js";
+export type { ResolveTenant, ToolCatalogHooks } from "./catalog.js";
 export { createToolCatalog } from "./catalog.js";
 export { defineTool, defineTools } from "./define-tool.js";
 export type { ToolErrorCode } from "./errors.js";

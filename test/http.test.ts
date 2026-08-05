@@ -7,7 +7,7 @@ import { createToolCatalog, defineTool } from "../src/index.js";
 const whoAmI = defineTool({
 	name: "who_am_i",
 	schema: z.object({}),
-	handler: (input, ctx) => ({ tenant: ctx.tenantId }),
+	handler: (_input, ctx) => ({ tenant: ctx.tenantId }),
 });
 
 async function withServer(run: (baseUrl: URL) => Promise<void>) {

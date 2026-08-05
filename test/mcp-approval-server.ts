@@ -10,7 +10,7 @@ const deleteCampaign = defineTool({
 
 await createToolCatalog({
 	tools: [deleteCampaign],
-	onApprovalNeeded: () => false,
+	hooks: { onApprovalNeeded: () => false },
 }).stdio({
 	tenantId: "acme",
 	jwt: "demo",

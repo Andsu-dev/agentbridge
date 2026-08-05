@@ -33,7 +33,7 @@ describe("approval gate", () => {
 		const runs = { count: 0 };
 		const catalog = createToolCatalog({
 			tools: [sensitiveTool(runs)],
-			onApprovalNeeded: () => false,
+			hooks: { onApprovalNeeded: () => false },
 		});
 
 		await expect(
@@ -49,9 +49,11 @@ describe("approval gate", () => {
 		const seen: unknown[] = [];
 		const catalog = createToolCatalog({
 			tools: [sensitiveTool(runs)],
-			onApprovalNeeded: (request) => {
-				seen.push(request);
-				return true;
+			hooks: {
+				onApprovalNeeded: (request) => {
+					seen.push(request);
+					return true;
+				},
 			},
 		});
 
